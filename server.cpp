@@ -100,6 +100,35 @@ void server::recieve_therad_pool(vector<client_info *> *pool, mutex *mtx, bool *
     }
 }
 
+void server::add_recieve_pool() {
+    vector<client_info *> *pool = new vector<client_info *>();
+}
+
+void server::equalize_pq(vector<vector<client_info *> *> pq) {
+    if(pq.size() == 1)
+        return;
+
+    int pos_min = -1;
+    int pos_max = -1;
+    unsigned int min = INT_MAX;
+    unsigned int max = INT_MIN;
+
+    for(unsigned int i=0; i<pq[i]->size(); i++) {
+        if(pq[i]->size() < min) {
+            min = pq[i]->size();
+            pos_min = i;
+        } else if(pq[i]->size() > max) {
+            max = pq[i]->size();
+            pos_max = i;
+        }
+    }
+
+    if((max - min) > 1) {
+        pq[pos_min]->push_back(pq[pos_max]->back());
+        pq[pos_max]->pop_back();
+    }
+}
+
 void server::send(client_info *client_id, void *packet) {
     send_struct *send_info = new send_struct();
     send_info->recipient = client_id;

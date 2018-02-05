@@ -2,7 +2,9 @@
 #define __server__
 
 #include <pthread.h>
+#include <climits>
 #include <vector>
+#include <queue>
 
 #include "endpoint.h"
 
@@ -19,9 +21,19 @@ struct send_struct {
     client_info *recipient;
 };
 
+struct LessThan
+{
+  bool operator()(const vector<client_info *> *lhs, const vector<client_info *> *rhs) const
+  {
+    return lhs->size() < rhs->size();
+  }
+};
+
 class server : public endpoint {
     protected:
+        priority_queue<vector<client_info *> *, vector<vector<client_info *> *>, LessThan> pq_recieve;
         vector<client_info *> clients;
+
         pthread_t listen_thread;
         int connections;
         bool active;
@@ -47,6 +59,11 @@ class server : public endpoint {
          *      will create another thread that will recieve the message and pass it to the handler function
         */
         static void recieve_therad_pool(vector<client_info *> *pool, mutex *mtx, bool *active);
+
+        /**
+         * 
+        */
+        static void equalize_pq(vector<vector<client_info *> *> pq);
 
     public:
         server(int sock_port, int max_connections = 5);
