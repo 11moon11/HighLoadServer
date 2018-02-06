@@ -21,7 +21,7 @@ class endpoint {
     protected:
         int port, client_len, socket_fd, newsocket_fd;
         struct sockaddr_in server_addr, client_addr;
-        mutex mmutex;
+        mutex *mmutex;
         bool status;
 
     public:

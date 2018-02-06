@@ -4,6 +4,7 @@ endpoint::endpoint(int sock_port) {
     status = false;
     port = sock_port;
     client_len = sizeof(client_addr);
+    mmutex = new mutex();
     socket_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     if(socket_fd < 0) {

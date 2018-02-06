@@ -49,6 +49,7 @@ void *server::connection_listen(server *This) {
         do { // So we don't waste resources while no one is trying to connect
             usleep(100000); // Sleep for 100 ms
             new_fd = accept(This->socket_fd, (struct sockaddr *)&new_addr, (socklen_t *)&c_len);
+            equalize_pq(&This->pq_recieve);
         } while(new_fd == -1 && This->active);
 
         if(This->active == false) {
@@ -63,49 +64,62 @@ void *server::connection_listen(server *This) {
         int conn_num = This->clients.size() + 1;
         send(new_info, &conn_num);
 
-        This->mmutex.lock();
+        This->mmutex->lock();
         cout << "Client #" << conn_num << " connected!" << endl;
         This->clients.push_back(new_info);
-        This->mmutex.unlock();
+        This->mmutex->unlock();
     }
 
     return NULL;
 }
 
-void server::recieve_therad_pool(vector<client_info *> *pool, mutex *mtx, bool *act) {
-    while(*act) {
-        mtx->lock();
-        unsigned int limit = pool->size();
-        mtx->unlock();
+void server::recieve_therad_pool(recieve_pool_struct *rev_info) {
+    pthread_detach(pthread_self());
+
+    while(*rev_info->act) {
+        rev_info->mtx->lock();
+        unsigned int limit = rev_info->pool->size();
+        rev_info->mtx->unlock();
 
         for(unsigned int i=0; i<limit; i++) {
-            mtx->lock();
-            client_info *user = pool->at(i);
-            mtx->unlock();
+            rev_info->mtx->lock();
+            client_info *user = rev_info->pool->at(i);
+            rev_info->mtx->unlock();
             if(user == nullptr)
                 continue;
             
             int number;
             int ret = endpoint::__recieve(user->client_fd, &number, sizeof(number));
             if(ret == error) {
-                mtx->lock();
+                rev_info->mtx->lock();
                 cout << strerror(errno) << endl;
-                mtx->unlock();
+                rev_info->mtx->unlock();
                 continue;
             } else if(ret == transfering) {
                 // Start recieve thread
 
             }
         }
+
+        usleep(100000);
     }
 }
 
 void server::add_recieve_pool() {
     vector<client_info *> *pool = new vector<client_info *>();
+    pq_recieve.push_back(pool);
+
+    recieve_pool_struct *rec_info = new recieve_pool_struct();
+    rec_info->act = &active;
+    rec_info->pool = pool;
+    rec_info->mtx = mmutex;
+
+    pthread_t recieve_thread;
+    pthread_create(&recieve_thread, NULL, (THREADFUNCPTR)recieve_therad_pool, rec_info);
 }
 
-void server::equalize_pq(vector<vector<client_info *> *> pq) {
-    if(pq.size() == 1)
+void server::equalize_pq(vector<vector<client_info *> *> *pq) {
+    if(pq->size() < 2)
         return;
 
     int pos_min = -1;
@@ -113,19 +127,19 @@ void server::equalize_pq(vector<vector<client_info *> *> pq) {
     unsigned int min = INT_MAX;
     unsigned int max = INT_MIN;
 
-    for(unsigned int i=0; i<pq[i]->size(); i++) {
-        if(pq[i]->size() < min) {
-            min = pq[i]->size();
+    for(unsigned int i=0; i<pq->at(i)->size(); i++) {
+        if(pq->at(i)->size() < min) {
+            min = pq->at(i)->size();
             pos_min = i;
-        } else if(pq[i]->size() > max) {
-            max = pq[i]->size();
+        } else if(pq->at(i)->size() > max) {
+            max = pq->at(i)->size();
             pos_max = i;
         }
     }
 
     if((max - min) > 1) {
-        pq[pos_min]->push_back(pq[pos_max]->back());
-        pq[pos_max]->pop_back();
+        pq->at(pos_min)->push_back(pq->at(pos_max)->back());
+        pq->at(pos_max)->pop_back();
     }
 }
 

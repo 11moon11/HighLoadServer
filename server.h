@@ -21,6 +21,12 @@ struct send_struct {
     client_info *recipient;
 };
 
+struct recieve_pool_struct {
+    vector<client_info *> *pool; 
+    mutex *mtx;
+    bool *act;
+};
+
 struct LessThan
 {
   bool operator()(const vector<client_info *> *lhs, const vector<client_info *> *rhs) const
@@ -31,7 +37,8 @@ struct LessThan
 
 class server : public endpoint {
     protected:
-        priority_queue<vector<client_info *> *, vector<vector<client_info *> *>, LessThan> pq_recieve;
+        //priority_queue<vector<client_info *> *, vector<vector<client_info *> *>, LessThan> pq_recieve;
+        vector<vector<client_info *> *> pq_recieve;
         vector<client_info *> clients;
 
         pthread_t listen_thread;
@@ -58,12 +65,12 @@ class server : public endpoint {
          * Loops through the pool and checks weather there is a message from this user, if there is -
          *      will create another thread that will recieve the message and pass it to the handler function
         */
-        static void recieve_therad_pool(vector<client_info *> *pool, mutex *mtx, bool *active);
+        static void recieve_therad_pool(recieve_pool_struct *rev_info);
 
         /**
          * 
         */
-        static void equalize_pq(vector<vector<client_info *> *> pq);
+        static void equalize_pq(vector<vector<client_info *> *> *pq);
 
     public:
         server(int sock_port, int max_connections = 5);
