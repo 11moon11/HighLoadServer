@@ -17,6 +17,7 @@ struct client_info {
 };
 
 struct send_struct {
+    int size;
     void *packet;
     client_info *recipient;
 };
@@ -38,7 +39,7 @@ struct LessThan
 class server : public endpoint {
     protected:
         //priority_queue<vector<client_info *> *, vector<vector<client_info *> *>, LessThan> pq_recieve;
-        vector<vector<client_info *> *> pq_recieve;
+        vector<vector<client_info *> *> *pq_recieve;
         vector<client_info *> clients;
 
         pthread_t listen_thread;
@@ -79,7 +80,10 @@ class server : public endpoint {
         void start();
         void stop();
 
-        static void send(client_info *client_id, void *packet);
+        static void send(client_info *client_id, void *packet, int size);
+
+        void broadcast(void *packet, int size);
+
         static void recieve(client_info *client_id, void *packet);
 
         /**

@@ -17,16 +17,18 @@ endpoint::endpoint(int sock_port) {
 }
 
 endpoint::~endpoint() {
-    close(socket_fd);
+    status = false;
     close(newsocket_fd);
+    close(socket_fd);
+    delete mmutex;
 }
 
 bool endpoint::isReady() {
     return status;
 }
 
-bool endpoint::_send(int to_socket, void *package) {
-    while(write(to_socket, package, sizeof(package)) < 0) {
+bool endpoint::_send(int to_socket, void *package, int size) {
+    while(write(to_socket, package, size) < 0) {
         if(errno == EINPROGRESS) { // Operation in progress
             usleep(100000);
             continue;

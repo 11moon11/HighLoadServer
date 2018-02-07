@@ -22,16 +22,27 @@ client::client(const char *hostname, int sock_port) : endpoint(sock_port) {
         return;
     }
 
+    /* Test */
+    for(int i=0; i<5; i++) {
+    char buff[1];
+    if(!recieve(buff, sizeof(buff))) {
+        cout << "Failed to obtain letter" << endl;
+        return;
+    } else {
+        cout << "client # " << client_id << ": " << buff << endl;
+    }
+    }
+    /* End of Test */
+
     cout << "Issued client id: " << client_id << endl;
     this->status = true;
 }
 
 client::~client() {
-    
 }
 
-bool client::send(void *package) {
-    return endpoint::_send(socket_fd, package);
+bool client::send(void *package, int size) {
+    return endpoint::_send(socket_fd, package, size);
     
 }
 

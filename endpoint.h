@@ -21,6 +21,7 @@ class endpoint {
     protected:
         int port, client_len, socket_fd, newsocket_fd;
         struct sockaddr_in server_addr, client_addr;
+        int hello_size = 6;
         mutex *mmutex;
         bool status;
 
@@ -30,7 +31,7 @@ class endpoint {
 
         bool isReady();
 
-        static bool _send(int to_socket, void *package);
+        static bool _send(int to_socket, void *package, int size);
 
         static bool _recieve(int from_socket, void *package, int size);
 

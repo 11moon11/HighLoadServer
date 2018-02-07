@@ -25,6 +25,10 @@ class Networking {
     public:
         Networking(Mode m);
         ~Networking();
+
+        void send(void *packet, int size);
+        void recieve(void *packet);
+        void add_recieve_pool();
 };
 
 #endif

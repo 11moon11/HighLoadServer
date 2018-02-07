@@ -19,7 +19,7 @@ class client : public endpoint {
          * 
          * @return Returns true if transfer of file was successful, false otherwise
         */
-        bool send(void *package);
+        bool send(void *package, int size);
 
         /**
          * @param package - pointer to where to write the data
